@@ -29,8 +29,6 @@ calcula promedios, determina elegibilidad (promedio ≥ 8,5), ordena candidatos 
 | `GestorBecas` | Reglas de negocio e integración | `registrarEstudiante`, `registrarEvaluacion`, `obtenerRankingElegibles`, `asignarBecas`, `explicarEstudiante`, `generarInformeAsignacion` |
 | `Main` | Menú con `Scanner`, `switch` y ciclo `do-while` | `main`, `leerEntero`, `leerDecimal` |
 
-Diagrama de clases: [`docs/diagrama_clases.png`](docs/diagrama_clases.png)
-
 ### Demostración rápida
 1. Opción `9` (cargar datos de demostración).
 2. Opción `4` (ver ranking) → E001, E002, E003.
