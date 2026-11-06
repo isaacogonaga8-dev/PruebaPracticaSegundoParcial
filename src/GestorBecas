@@ -1,0 +1,144 @@
+public class GestorBecas {
+    private Estudiante[] estudiantes;
+    private int contadorEstudiantes;
+    private Beca beca;
+    private final int MAX_ESTUDIANTES = 100;
+
+    public GestorBecas() {
+        this.estudiantes = new Estudiante[MAX_ESTUDIANTES];
+        this.contadorEstudiantes = 0;
+        this.beca = new Beca();
+    }
+
+    public boolean registrarEstudiante(String codigo, String nombre) {
+        if (codigo.trim().isEmpty() || nombre.trim().isEmpty() || contadorEstudiantes >= MAX_ESTUDIANTES) return false;
+        if (buscarEstudiante(codigo) != null) return false; // Código duplicado
+
+        estudiantes[contadorEstudiantes++] = new Estudiante(codigo, nombre);
+        return true;
+    }
+
+    public Estudiante buscarEstudiante(String codigo) {
+        for (int i = 0; i < contadorEstudiantes; i++) {
+            if (estudiantes[i].getCodigo().equalsIgnoreCase(codigo)) return estudiantes[i];
+        }
+        return null;
+    }
+
+    public boolean registrarEvaluacion(String codigo, String nombreEv, double nota) {
+        if (nota < 0 || nota > 10) return false;
+        Estudiante e = buscarEstudiante(codigo);
+        if (e == null) return false;
+        return e.agregarEvaluacion(new Evaluacion(nombreEv, nota));
+    }
+
+    public void listarEstudiantes() {
+        if (contadorEstudiantes == 0) {
+            System.out.println("No hay estudiantes registrados.");
+            return;
+        }
+        for (int i = 0; i < contadorEstudiantes; i++) {
+            System.out.printf("Código: %s | Nombre: %s | Promedio: %.2f\n", 
+                estudiantes[i].getCodigo(), estudiantes[i].getNombre(), estudiantes[i].calcularPromedio());
+        }
+    }
+
+    public Estudiante[] obtenerRankingElegibles(int[] tamanoRanking) {
+        // Contar cuántos son elegibles
+        int totalElegibles = 0;
+        for (int i = 0; i < contadorEstudiantes; i++) {
+            if (beca.esElegible(estudiantes[i])) totalElegibles++;
+        }
+
+        Estudiante[] elegibles = new Estudiante[totalElegibles];
+        int idx = 0;
+        for (int i = 0; i < contadorEstudiantes; i++) {
+            if (beca.esElegible(estudiantes[i])) elegibles[idx++] = estudiantes[i];
+        }
+
+        // Ordenamiento Burbuja: Promedio descendente, desempate por código ascendente
+        for (int i = 0; i < totalElegibles - 1; i++) {
+            for (int j = 0; j < totalElegibles - i - 1; j++) {
+                double p1 = elegibles[j].calcularPromedio();
+                double p2 = elegibles[j + 1].calcularPromedio();
+
+                boolean intercambiar = false;
+                if (p1 < p2) {
+                    intercambiar = true;
+                } else if (p1 == p2) {
+                    if (elegibles[j].getCodigo().compareToIgnoreCase(elegibles[j + 1].getCodigo()) > 0) {
+                        intercambiar = true;
+                    }
+                }
+
+                if (intercambiar) {
+                    Estudiante aux = elegibles[j];
+                    elegibles[j] = elegibles[j + 1];
+                    elegibles[j + 1] = aux;
+                }
+            }
+        }
+        tamanoRanking[0] = totalElegibles; // Retorna el tamaño mediante un arreglo de control
+        return elegibles;
+    }
+
+    public void configurarCupo(int cupo) { beca.configurarCupo(cupo); }
+
+    public void asignarBecas() {
+        if (beca.getCupoMaximo() <= 0) {
+            System.out.println("Configure primero un cupo válido de becas.");
+            return;
+        }
+        beca.reiniciarAsignacion();
+        int[] tamRank = new int[1];
+        Estudiante[] ranking = obtenerRankingElegibles(tamRank);
+
+        for (int i = 0; i < tamRank[0]; i++) {
+            if (beca.hayCupo()) {
+                beca.agregarBeneficiario(ranking[i]);
+            } else {
+                break;
+            }
+        }
+        System.out.println("Asignación realizada con éxito.");
+    }
+
+    public void explicarEstudiante(String codigo) {
+        Estudiante e = buscarEstudiante(codigo);
+        if (e == null) {
+            System.out.println("Estudiante no existe.");
+            return;
+        }
+        if (!beca.esElegible(e)) {
+            System.out.println("Estado: RECHAZADO - Promedio insuficiente (< 8.5).");
+            return;
+        }
+        if (beca.esBeneficiario(e)) {
+            System.out.println("Estado: ACEPTADO - Cumple promedio y alcanzó cupo.");
+        } else {
+            System.out.println("Estado: RECHAZADO POR CUPO - Es elegible pero los cupos se agotaron.");
+        }
+    }
+
+    public void generarInformeAsignacion() {
+        System.out.println("--- INFORME DE ASIGNACIÓN ---");
+        System.out.println("Cupos Totales: " + beca.getCupoMaximo());
+        System.out.println("Becas Asignadas: " + beca.getContadorBeneficiarios());
+        System.out.println("Beneficiarios:");
+        Estudiante[] ben = beca.getBeneficiarios();
+        for (int i = 0; i < beca.getContadorBeneficiarios(); i++) {
+            System.out.printf("- %s: %s (Promedio: %.2f)\n", ben[i].getCodigo(), ben[i].getNombre(), ben[i].calcularPromedio());
+        }
+    }
+
+    public void cargarDatosDemostracion() {
+        registrarEstudiante("E001", "Steven Betancourt");
+        registrarEstudiante("E002", "Julio Teran");
+        registrarEstudiante("E003", "Isaac Ogonaga");
+
+        registrarEvaluacion("E001", "Parcial 1", 9.5);
+        registrarEvaluacion("E002", "Parcial 1", 9.0);
+        registrarEvaluacion("E003", "Parcial 1", 8.6);
+        System.out.println("Datos de prueba cargados correctamente.");
+    }
+}
