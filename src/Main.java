@@ -1,146 +1,87 @@
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-
     public static void main(String[] args) {
+        GestorBecas gestor = new GestorBecas();
         Scanner sc = new Scanner(System.in);
-        GestorBecas gestor = new GestorBecas(new Beca("Beca de Excelencia Académica", 2));
-        int opcion = -1;
+        int opcion;
 
         do {
-            mostrarMenu(gestor);
-            opcion = leerEntero(sc, "Elija una opción: ");
-            try {
-                switch (opcion) {
-                    case 1:
-                        registrarEstudiante(sc, gestor);
-                        break;
-                    case 2:
-                        registrarEvaluacion(sc, gestor);
-                        break;
-                    case 3:
-                        listarEstudiantes(gestor);
-                        break;
-                    case 4:
-                        mostrarRanking(gestor);
-                        break;
-                    case 5:
-                        int cupo = leerEntero(sc, "Nuevo cupo máximo de becas: ");
-                        gestor.configurarCupo(cupo);
-                        System.out.println("Cupo actualizado a " + cupo + ". Debe volver a asignar las becas.");
-                        break;
-                    case 6:
-                        int asignadas = gestor.asignarBecas();
-                        System.out.println("Asignación realizada. Becas asignadas: " + asignadas);
-                        break;
-                    case 7:
-                        System.out.print("Código del estudiante: ");
-                        System.out.println(gestor.explicarEstudiante(sc.nextLine()));
-                        break;
-                    case 8:
-                        System.out.println(gestor.generarInformeAsignacion());
-                        break;
-                    case 9:
-                        gestor.cargarDatosDemo();
-                        System.out.println("Datos de demostración cargados.");
-                        break;
-                    case 0:
-                        System.out.println("Fin del programa.");
-                        break;
-                    default:
-                        System.out.println("Opción inválida. Elija un número del 0 al 9.");
-                }
-            } catch (IllegalArgumentException | IllegalStateException ex) {
-                System.out.println("ERROR: " + ex.getMessage());
+            System.out.println("\n=== SISTEMA DE GESTIÓN DE BECAS ===");
+            System.out.println("1. Registrar estudiante");
+            System.out.println("2. Registrar evaluación");
+            System.out.println("3. Listar estudiantes y promedios");
+            System.out.println("4. Ver ranking de elegibles");
+            System.out.println("5. Configurar cupo de becas");
+            System.out.println("6. Asignar becas");
+            System.out.println("7. Explicar situación de un estudiante");
+            System.out.println("8. Informe de asignación");
+            System.out.println("9. Cargar datos de demostración");
+            System.out.println("0. Salir");
+            System.out.print("Seleccione una opción: ");
+            
+            while (!sc.hasNextInt()) {
+                System.out.print("Opción inválida. Ingrese un número: ");
+                sc.next();
+            }
+            opcion = sc.nextInt();
+            sc.nextLine(); // Limpiar buffer
+
+            switch (opcion) {
+                case 1:
+                    System.out.print("Código: "); String cod = sc.nextLine();
+                    System.out.print("Nombre: "); String nom = sc.nextLine();
+                    if (gestor.registrarEstudiante(cod, nom)) System.out.println("Registrado con éxito.");
+                    else System.out.println("Error al registrar (campos vacíos o código duplicado).");
+                    break;
+                case 2:
+                    System.out.print("Código estudiante: "); String c = sc.nextLine();
+                    System.out.print("Nombre Evaluación: "); String evNom = sc.nextLine();
+                    System.out.print("Nota (0-10): "); 
+                    while (!sc.hasNextDouble()) { System.out.print("Número inválido. Nota: "); sc.next(); }
+                    double nota = sc.nextDouble();
+                    if (gestor.registrarEvaluacion(c, evNom, nota)) System.out.println("Evaluación añadida.");
+                    else System.out.println("Error al registrar nota (Rango 0-10 o evaluación repetida).");
+                    break;
+                case 3:
+                    gestor.listarEstudiantes();
+                    break;
+                case 4:
+                    int[] tam = new int[1];
+                    Estudiante[] rank = gestor.obtenerRankingElegibles(tam);
+                    System.out.println("--- RANKING DE ELEGIBLES ---");
+                    for (int i = 0; i < tam[0]; i++) {
+                        System.out.printf("%d. %s - %s (Promedio: %.2f)\n", (i+1), rank[i].getCodigo(), rank[i].getNombre(), rank[i].calcularPromedio());
+                    }
+                    break;
+                case 5:
+                    System.out.print("Cantidad de cupos: ");
+                    while (!sc.hasNextInt()) { System.out.print("Número entero requerido: "); sc.next(); }
+                    int cupo = sc.nextInt();
+                    if (cupo > 0) { gestor.configurarCupo(cupo); System.out.println("Cupo actualizado."); }
+                    else System.out.println("El cupo debe ser mayor a 0.");
+                    break;
+                case 6:
+                    gestor.asignarBecas();
+                    break;
+                case 7:
+                    System.out.print("Código del estudiante a consultar: ");
+                    String codBusq = sc.nextLine();
+                    gestor.explicarEstudiante(codBusq);
+                    break;
+                case 8:
+                    gestor.generarInformeAsignacion();
+                    break;
+                case 9:
+                    gestor.cargarDatosDemostracion();
+                    break;
+                case 0:
+                    System.out.println("Saliendo del programa...");
+                    break;
+                default:
+                    System.out.println("Opción fuera de rango.");
             }
         } while (opcion != 0);
-
         sc.close();
-    }
-
-    private static void mostrarMenu(GestorBecas gestor) {
-        System.out.println("\n===== GESTIÓN DE BECAS =====");
-        System.out.println(gestor.getBeca());
-        System.out.println("1. Registrar estudiante");
-        System.out.println("2. Registrar evaluación");
-        System.out.println("3. Listar estudiantes y promedios");
-        System.out.println("4. Ver ranking de elegibles");
-        System.out.println("5. Configurar cupo de becas");
-        System.out.println("6. Asignar becas");
-        System.out.println("7. Explicar situación de un estudiante");
-        System.out.println("8. Informe de asignación");
-        System.out.println("9. Cargar datos de demostración");
-        System.out.println("0. Salir");
-    }
-
-    private static void registrarEstudiante(Scanner sc, GestorBecas gestor) {
-        System.out.print("Código: ");
-        String codigo = sc.nextLine();
-        System.out.print("Nombre: ");
-        String nombre = sc.nextLine();
-        Estudiante e = gestor.registrarEstudiante(codigo, nombre);
-        System.out.println("Registrado: " + e);
-    }
-
-    private static void registrarEvaluacion(Scanner sc, GestorBecas gestor) {
-        System.out.print("Código del estudiante: ");
-        String codigo = sc.nextLine();
-        System.out.print("Nombre de la evaluación: ");
-        String nombre = sc.nextLine();
-        double nota = leerDecimal(sc, "Nota (0 a 10): ");
-        gestor.registrarEvaluacion(codigo, nombre, nota);
-        System.out.printf("Evaluación registrada. Promedio actual: %.2f%n", gestor.calcularPromedio(codigo));
-    }
-
-    private static void listarEstudiantes(GestorBecas gestor) {
-        List<Estudiante> lista = gestor.getEstudiantes();
-        if (lista.isEmpty()) {
-            System.out.println("No hay estudiantes registrados.");
-            return;
-        }
-        for (Estudiante e : lista) {
-            String estado = !e.tieneEvaluaciones() ? "sin evaluaciones"
-                    : gestor.esElegible(e) ? "elegible" : "no elegible";
-            System.out.println(e + " -> " + estado);
-        }
-    }
-
-    private static void mostrarRanking(GestorBecas gestor) {
-        List<Estudiante> ranking = gestor.obtenerRankingElegibles();
-        if (ranking.isEmpty()) {
-            System.out.println("No hay candidatos elegibles.");
-            return;
-        }
-        int pos = 1;
-        for (Estudiante e : ranking) {
-            System.out.printf("%d. %s - %s | promedio %.2f%n", pos++, e.getCodigo(), e.getNombre(), e.calcularPromedio());
-        }
-    }
-
-    
-    private static int leerEntero(Scanner sc, String mensaje) {
-        while (true) {
-            System.out.print(mensaje);
-            String linea = sc.nextLine().trim();
-            try {
-                return Integer.parseInt(linea);
-            } catch (NumberFormatException ex) {
-                System.out.println("Entrada inválida: ingrese un número entero.");
-            }
-        }
-    }
-
-    
-    private static double leerDecimal(Scanner sc, String mensaje) {
-        while (true) {
-            System.out.print(mensaje);
-            String linea = sc.nextLine().trim().replace(',', '.');
-            try {
-                return Double.parseDouble(linea);
-            } catch (NumberFormatException ex) {
-                System.out.println("Entrada inválida: ingrese un número (ej. 8.5).");
-            }
-        }
     }
 }
